@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+
+<title>Instant Admin</title>
+
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.4/css/bulma.min.css" rel="stylesheet" />
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
+
+<style>
+    :root {
+        /* since bulma is using SASS we do not have access to these vars */
+        --bulma-gap: 32px;
+
+        /* instant admin specific vars */
+        --accent-color: hsl(217, 71%, 53%);
+        --accent-contrast-color: white;
+
+        /* sidebar */
+        --sidebar-background-color: var(--accent-color);
+        --sidebar-text-color: var(--accent-contrast-color);
+        --sidebar-active-background-color: var(--accent-contrast-color);
+        --sidebar-active-text-color: var(--accent-color);
+        --sidebar-hover-background-color: hsl(0, 0%, 21%);
+        --sidebar-hover-text-color: var(--accent-contrast-color);
+        --sidebar-width: 18rem;
+
+        /* navbar */
+        --navbar-height: 4rem;
+
+        background: #fafafa;
+    }
+
+    .is-centered {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .is-accent-colored {
+        background-color: var(--accent-color) !important;
+        color: var(--accent-contrast-color) !important;
+
+        .navbar-item,
+        .navbar-burger {
+            color: var(--accent-contrast-color) !important;
+        }
+    }
+
+    .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        z-index: 40;
+        height: 100vh;
+        width: var(--sidebar-width);
+        background-color: var(--sidebar-background-color);
+        color: var(--sidebar-text-color);
+        padding: var(--bulma-gap);
+        padding-top: 0;
+
+        .sidebar-logo {
+            height: var(--navbar-height);
+
+            a {
+                color: var(--sidebar-text-color);
+            }
+        }
+
+        .menu-list a {
+            color: var(--sidebar-text-color);
+
+            &.is-active {
+                background-color: var(--sidebar-active-background-color);
+                color: var(--sidebar-active-text-color);
+            }
+
+            &:hover {
+                background-color: var(--sidebar-hover-background-color);
+                color: var(--sidebar-hover-text-color);
+            }
+        }
+
+        .menu-label {
+            color: var(--sidebar-text-color);
+        }
+    }
+
+    .sidebar-mobile {
+        left: -100vw;
+        transition: left 0.3s ease;
+        top: 50px;
+        height: 100vh;
+        width: 100vw;
+        background-color: var(--sidebar-background-color);
+        padding-top: var(--bulma-gap);
+
+        &.is-open {
+            left: 0;
+        }
+
+        .user-dropdown {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: calc(var(--bulma-gap) * 0.5);
+        }
+    }
+
+    .content-pane {
+        margin-left: var(--sidebar-width);
+        margin-top: var(--navbar-height);
+
+        .navbar {
+            height: var(--navbar-height);
+            left: var(--sidebar-width);
+
+            transition: color 0.3s ease, background-color 0.3s ease;
+
+            .navbar-icon-button {
+                .icon {
+                    font-size: 1.5rem;
+                }
+            }
+
+            .user-menu {
+                .user-text {
+                    margin-right: calc(var(--bulma-gap) * 0.5);
+
+                    .user-name {
+                        font-weight: bold;
+                    }
+
+                    .user-name-subline {
+                        font-size: 0.8em;
+                    }
+                }
+
+                .avatar {
+                    max-height: unset !important;
+                }
+            }
+        }
+    }
+
+    .w-100 {
+        width: 100%;
+    }
+
+    .my-1 {
+        margin-top: var(--bulma-gap);
+        margin-bottom: var(--bulma-gap);
+    }
+
+    /* breakpoint: mobile */
+    @media screen and (max-width: 1023px) {
+        .sidebar:not(.sidebar-mobile) {
+            display: none;
+        }
+
+        .content-pane {
+            margin-left: 0;
+
+            .navbar {
+                left: 0;
+                height: unset;
+            }
+        }
+    }
+</style>
+
+<div id="app" x-data="{ mobileSidebarOpen: false }">
+    <!-- Sidebar, the mobile version has its own sidebar below -->
+    <aside class="sidebar menu is-hidden-mobile">
+        <div class="sidebar-logo is-centered">
+            <a href="/">
+                <span class="icon-text">
+                    <span class="icon">
+                        <i class="fa-solid fa-bolt"></i>
+                    </span>
+                    <span>Instant Admin</span>
+                </span>
+            </a>
+        </div>
+
+        <p class="menu-label">
+            General
+        </p>
+        <ul class="menu-list">
+            <li><a class="is-active">Dashboard</a></li>
+            <li><a>Customers</a></li>
+        </ul>
+        <p class="menu-label">
+            Administration
+        </p>
+        <ul class="menu-list">
+            <li><a>Team Settings</a></li>
+            <li>
+                <a>Manage Your Team</a>
+                <ul>
+                    <li><a>Members</a></li>
+                    <li><a>Plugins</a></li>
+                    <li><a>Add a member</a></li>
+                </ul>
+            </li>
+            <li><a>Invitations</a></li>
+            <li><a>Cloud Storage Environment Settings</a></li>
+            <li><a>Authentication</a></li>
+        </ul>
+        <p class="menu-label">
+            Transactions
+        </p>
+        <ul class="menu-list">
+            <li><a>Payments</a></li>
+            <li><a>Transfers</a></li>
+            <li><a>Balance</a></li>
+        </ul>
+    </aside>
+
+    <!-- Mobile Sidebar is a copy of the sidebar above -->
+    <aside class="sidebar sidebar-mobile menu is-hidden-desktop" :class="mobileSidebarOpen ? 'is-open' : ''">
+        <div class="field my-1">
+            <p class="control has-icons-left has-icons-right">
+                <input class="input" type="text" placeholder="Search...">
+                <span class="icon is-small is-left">
+                    <i class="fas fa-search"></i>
+                </span>
+            </p>
+        </div>
+
+        <div class="dropdown w-100 my-1" :class="open ? 'is-active' : ''" x-data="{ open: false }">
+            <div class="dropdown-trigger w-100">
+                <button class="button w-100" x-on:click="open = !open">
+                    <span>
+                        <span class="icon-text">
+                            <span class="icon">
+                                <i class="fas fa-folder"></i>
+                            </span>
+                            <span><strong>Tenant</strong>: Instant Admin</span>
+                        </span>
+                    </span>
+                    <span class="icon is-small">
+                        <i class="fas fa-angle-down" aria-hidden="true"></i>
+                    </span>
+                </button>
+            </div>
+            <div class="dropdown-menu w-100">
+                <div class="dropdown-content">
+                    <a href="#" class="dropdown-item">
+                        <span class="icon-text">
+                            <span class="icon">
+                                <i class="fas fa-folder"></i>
+                            </span>
+                            <span>Other Tenant</span>
+                        </span>
+                    </a>
+                    <a class="dropdown-item">
+                        <span class="icon-text">
+                            <span class="icon">
+                                <i class="fas fa-folder"></i>
+                            </span>
+                            <span>Test Test Test</span>
+                        </span>
+                    </a>
+                    <hr class="dropdown-divider">
+                    <a href="#" class="dropdown-item">
+                        <span class="icon-text">
+                            <span class="icon">
+                                <i class="fas fa-plus"></i>
+                            </span>
+                            <span>Add a new tenant</span>
+                        </span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="dropdown w-100 my-1" :class="open ? 'is-active' : ''" x-data="{ open: false }">
+            <div class="dropdown-trigger w-100">
+                <button class="button w-100" x-on:click="open = !open">
+                    <span class="user-dropdown">
+                        <figure class="image is-16x16">
+                            <img class="avatar is-rounded"
+                                src="https://gravatar.com/avatar/662656eb59948f3b46bd7ad988f23a404279bf5c13ecac69b1126b70ca841d7c.jpg?s=16">
+                        </figure>
+                        <span>Christopher Kaster</span>
+                    </span>
+                    <span class="icon is-small">
+                        <i class="fas fa-angle-down" aria-hidden="true"></i>
+                    </span>
+                </button>
+            </div>
+            <div class="dropdown-menu w-100">
+                <div class="dropdown-content">
+                    <a href="#" class="dropdown-item">
+                        <span class="icon-text">
+                            <span class="icon">
+                                <i class="fas fa-user"></i>
+                            </span>
+                            <span>My Profile</span>
+                        </span>
+                    </a>
+                    <a class="dropdown-item">
+                        <span class="icon-text">
+                            <span class="icon">
+                                <i class="fas fa-gears"></i>
+                            </span>
+                            <span>Account Settings</span>
+                        </span>
+                    </a>
+                    <hr class="dropdown-divider">
+                    <a href="#" class="dropdown-item">
+                        <span class="icon-text">
+                            <span class="icon">
+                                <i class="fa-solid fa-right-from-bracket"></i>
+                            </span>
+                            <span>Log Out</span>
+                        </span>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <hr />
+        <p class="menu-label">
+            General
+        </p>
+        <ul class="menu-list">
+            <li><a class="is-active">Dashboard</a></li>
+            <li><a>Customers</a></li>
+        </ul>
+        <p class="menu-label">
+            Administration
+        </p>
+        <ul class="menu-list">
+            <li><a>Team Settings</a></li>
+            <li>
+                <a>Manage Your Team</a>
+                <ul>
+                    <li><a>Members</a></li>
+                    <li><a>Plugins</a></li>
+                    <li><a>Add a member</a></li>
+                </ul>
+            </li>
+            <li><a>Invitations</a></li>
+            <li><a>Cloud Storage Environment Settings</a></li>
+            <li><a>Authentication</a></li>
+        </ul>
+        <p class="menu-label">
+            Transactions
+        </p>
+        <ul class="menu-list">
+            <li><a>Payments</a></li>
+            <li><a>Transfers</a></li>
+            <li><a>Balance</a></li>
+        </ul>
+    </aside>
+
+    <div class="content-pane">
+        <nav class="navbar is-fixed-top" :class="mobileSidebarOpen ? 'is-accent-colored' : 'is-light'"
+            role="navigation">
+            <div class="navbar-brand">
+                <a class="navbar-item is-hidden-desktop" href="/">
+                    <span class="icon-text">
+                        <span class="icon">
+                            <i class="fa-solid fa-bolt"></i>
+                        </span>
+                        <span>Instant Admin</span>
+                    </span>
+                </a>
+
+                <a role="button" class="navbar-burger is-hidden-desktop"
+                    x-on:click="mobileSidebarOpen = !mobileSidebarOpen">
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                </a>
+            </div>
+
+            <div class="navbar-menu">
+                <div class="navbar-start">
+                    <div class="navbar-item has-dropdown is-hoverable">
+                        <a class="navbar-link" href="/">
+                            <span class="icon-text">
+                                <span class="icon">
+                                    <i class="fas fa-folder"></i>
+                                </span>
+                                <span><strong>Tenant</strong>: Instant Admin</span>
+                            </span>
+                        </a>
+
+                        <div class="navbar-dropdown">
+                            <a class="navbar-item">
+                                <span class="icon-text">
+                                    <span class="icon">
+                                        <i class="fas fa-folder"></i>
+                                    </span>
+                                    <span>Other Tenant</span>
+                                </span>
+                            </a>
+                            <a class="navbar-item">
+                                <span class="icon-text">
+                                    <span class="icon">
+                                        <i class="fas fa-folder"></i>
+                                    </span>
+                                    <span>Test Test Test</span>
+                                </span>
+                            </a>
+                            <hr class="navbar-divider">
+                            <a class="navbar-item">
+                                <span class="icon-text">
+                                    <span class="icon">
+                                        <i class="fas fa-plus"></i>
+                                    </span>
+                                    <span>Add a new tenant</span>
+                                </span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="navbar-center is-centered">
+                    <div class="navbar-item">
+                        <div class="field">
+                            <p class="control has-icons-left has-icons-right">
+                                <input class="input" type="text" placeholder="Search...">
+                                <span class="icon is-small is-left">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="navbar-end">
+                    <a class="navbar-item navbar-icon-button">
+                        <span class="icon is-large">
+                            <i class="fas fa-bell"></i>
+                        </span>
+                    </a>
+
+                    <div class="navbar-item has-dropdown is-hoverable">
+                        <a class="navbar-link user-menu">
+                            <div class="user-text">
+                                <div class="user-name">
+                                    Christopher Kaster
+                                </div>
+                                <div class="user-name-subline">
+                                    @atomicptr
+                                </div>
+                            </div>
+                            <figure class="image is-48x48">
+                                <img class="avatar is-rounded"
+                                    src="https://gravatar.com/avatar/662656eb59948f3b46bd7ad988f23a404279bf5c13ecac69b1126b70ca841d7c.jpg?s=48">
+                            </figure>
+                        </a>
+
+                        <div class="navbar-dropdown is-right">
+                            <a class="navbar-item">
+                                <span class="icon-text">
+                                    <span class="icon">
+                                        <i class="fas fa-user"></i>
+                                    </span>
+                                    <span>My Profile</span>
+                                </span>
+                            </a>
+                            <a class="navbar-item">
+                                <span class="icon-text">
+                                    <span class="icon">
+                                        <i class="fas fa-gears"></i>
+                                    </span>
+                                    <span>Account Settings</span>
+                                </span>
+                            </a>
+                            <hr class="navbar-divider">
+                            <a class="navbar-item">
+                                <span class="icon-text">
+                                    <span class="icon">
+                                        <i class="fa-solid fa-right-from-bracket"></i>
+                                    </span>
+                                    <span>Log Out</span>
+                                </span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <main>
+            <section class="section is-small">
+                <nav class="breadcrumb" aria-label="breadcrumbs">
+                    <ul>
+                        <li><a href="/">Admin</a></li>
+                        <li><a href="#" class="is-active">Dashboard</a></li>
+                    </ul>
+                </nav>
+            </section>
+            <section class="section section-content container">
+                <div class="notification is-danger">
+                    <button class="delete"></button>
+                    Lorem ipsum dolor sit amet, consectetur adipiscing elit lorem ipsum dolor sit amet, consectetur
+                    adipiscing elit
+                </div>
+
+                <div class="columns">
+                    <div class="column">
+                        <div class="card">
+                            <div class="card-content">
+                                test
+                            </div>
+                        </div>
+                    </div>
+                    <div class="column">
+                        <div class="card">
+                            <div class="card-content">
+                                test
+                            </div>
+                        </div>
+                    </div>
+                    <div class="column">
+                        <div class="card">
+                            <div class="card-content">
+                                test
+                            </div>
+                        </div>
+                    </div>
+                    <div class="column">
+                        <div class="card">
+                            <div class="card-content">
+                                test
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-content">
+                        <div class="subtitle">Send message to Administration</div>
+
+                        <div class="field is-horizontal">
+                            <div class="field-label is-normal">
+                                <label class="label">From</label>
+                            </div>
+                            <div class="field-body">
+                                <div class="field">
+                                    <p class="control is-expanded has-icons-left">
+                                        <input class="input" type="text" placeholder="Name">
+                                        <span class="icon is-small is-left">
+                                            <i class="fas fa-user"></i>
+                                        </span>
+                                    </p>
+                                </div>
+                                <div class="field">
+                                    <p class="control is-expanded has-icons-left has-icons-right">
+                                        <input class="input is-success" type="email" placeholder="Email"
+                                            value="alex@smith.com">
+                                        <span class="icon is-small is-left">
+                                            <i class="fas fa-envelope"></i>
+                                        </span>
+                                        <span class="icon is-small is-right">
+                                            <i class="fas fa-check"></i>
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="field is-horizontal">
+                            <div class="field-label"></div>
+                            <div class="field-body">
+                                <div class="field is-expanded">
+                                    <div class="field has-addons">
+                                        <p class="control">
+                                            <a class="button is-static">
+                                                +44
+                                            </a>
+                                        </p>
+                                        <p class="control is-expanded">
+                                            <input class="input" type="tel" placeholder="Your phone number">
+                                        </p>
+                                    </div>
+                                    <p class="help">Do not enter the first zero</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="field is-horizontal">
+                            <div class="field-label is-normal">
+                                <label class="label">Department</label>
+                            </div>
+                            <div class="field-body">
+                                <div class="field is-narrow">
+                                    <div class="control">
+                                        <div class="select is-fullwidth">
+                                            <select>
+                                                <option>Business development</option>
+                                                <option>Marketing</option>
+                                                <option>Sales</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="field is-horizontal">
+                            <div class="field-label">
+                                <label class="label">Already a member?</label>
+                            </div>
+                            <div class="field-body">
+                                <div class="field is-narrow">
+                                    <div class="control">
+                                        <label class="radio">
+                                            <input type="radio" name="member">
+                                            Yes
+                                        </label>
+                                        <label class="radio">
+                                            <input type="radio" name="member">
+                                            No
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="field is-horizontal">
+                            <div class="field-label is-normal">
+                                <label class="label">Subject</label>
+                            </div>
+                            <div class="field-body">
+                                <div class="field">
+                                    <div class="control">
+                                        <input class="input is-danger" type="text"
+                                            placeholder="e.g. Partnership opportunity">
+                                    </div>
+                                    <p class="help is-danger">
+                                        This field is required
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="field is-horizontal">
+                            <div class="field-label is-normal">
+                                <label class="label">Question</label>
+                            </div>
+                            <div class="field-body">
+                                <div class="field">
+                                    <div class="control">
+                                        <textarea class="textarea" placeholder="Explain how we can help you"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="field is-horizontal">
+                            <div class="field-label">
+                                <!-- Left empty for spacing -->
+                            </div>
+                            <div class="field-body">
+                                <div class="field">
+                                    <div class="control">
+                                        <button class="button is-primary">
+                                            Send message
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer is-centered">
+            <div class="has-text-centered">
+                <a href="https://github.com/atomicptr/instant-admin">
+                    <span class="icon-text">
+                        <span class="icon">
+                            <i class="fa-solid fa-bolt"></i>
+                        </span>
+                        <span>Instant Admin</span>
+                    </span>
+                </a>
+
+                <span>
+                    made with <i class="fas fa-heart"></i> by <a href="https://github.com/atomicptr">
+                        <span class="icon-text">
+                            <span class="icon">
+                                <i class="fab fa-github"></i>
+                            </span>
+                            <span>atomicptr</span>
+                        </span>
+                    </a>
+                </span>
+            </div>
+        </footer>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.13.7/cdn.min.js"></script>
